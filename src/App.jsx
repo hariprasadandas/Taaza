@@ -4,7 +4,7 @@ import LoginPage from './components/loginpage/Login'
 
 function App() {
   return (
-    <LoginPage />
+    <Layouts />
   )
 }
 

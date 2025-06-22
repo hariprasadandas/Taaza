@@ -17,7 +17,7 @@ const LoginPage= () => {
     const handleChangenumber = (event) => {
         setInputValuenumber(event.target.value);
         console.log(event.target.value);
-    };
+    }; 
 
   return (
     // Main container
