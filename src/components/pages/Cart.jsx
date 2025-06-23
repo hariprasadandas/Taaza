@@ -1,21 +1,5 @@
 import React, { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { db } from '../../firebase'
-import { collection, addDoc, serverTimestamp } from 'firebase/firestore'
-
-function loadScript(src) {
-  return new Promise((resolve) => {
-    const script = document.createElement('script');
-    script.src = src;
-    script.onload = () => {
-      resolve(true);
-    };
-    script.onerror = () => {
-      resolve(false);
-    };
-    document.body.appendChild(script);
-  });
-}
  
 function Cart() {
   const [cartItems, setCartItems] = useState([])
@@ -58,67 +42,6 @@ function Cart() {
  
   const totalItems = cartItems.reduce((total, item) => total + item.quantity, 0)
   const totalPrice = cartItems.reduce((total, item) => total + (item.price * item.quantity), 0)
- 
-  const handleCheckout = async () => {
-    const res = await loadScript('https://checkout.razorpay.com/v1/checkout.js');
-
-    if (!res) {
-      alert('Razorpay SDK failed to load. Are you online?');
-      return;
-    }
-    
-    // Check if the cart is empty
-    if (totalPrice <= 0) {
-      console.log("Cart is empty or total is zero.");
-      alert("Your cart is empty!");
-      return;
-    }
-
-    console.log("Preparing Razorpay options...");
-    const options = {
-      key: "rzp_test_Ty2fPZgb35aMIa",
-      amount: (totalPrice + 50) * 100, // Amount in paise, including delivery fee
-      currency: "INR",
-      name: "Taaza",
-      description: "Cart Checkout",
-      handler: async function (response) {
-        const orderData = {
-          transactionId: response.razorpay_payment_id,
-          paymentMethod: 'Razorpay',
-          cartItems: cartItems,
-          totalPrice: (totalPrice + 50),
-          status: 'Processing',
-          createdAt: serverTimestamp(),
-        };
-
-        try {
-          await addDoc(collection(db, 'orders'), orderData);
-          clearCart();
-          navigate('/success', { state: { transactionId: response.razorpay_payment_id } });
-        } catch (error) {
-          console.error("Error saving order to Firestore:", error);
-          alert("Payment successful, but failed to save your order. Please contact support.");
-        }
-      },
-      prefill: {
-        name: "Test User",
-        email: "test@example.com",
-        contact: "9999999999"
-      },
-      theme: {
-        color: "#3399cc"
-      }
-    };
-
-    console.log("Razorpay options:", options);
-
-    try {
-      const rzp = new window.Razorpay(options);
-      rzp.open();
-    } catch (error) {
-      console.error("Failed to open Razorpay checkout:", error);
-    }
-  }
  
   const containerStyle = {
     padding: '2rem',
@@ -387,6 +310,10 @@ function Cart() {
           <span>{totalItems}</span>
         </div>
         <div style={summaryRowStyle}>
+          <span>Subtotal:</span>
+          <span>₹{totalPrice}</span>
+        </div>
+        <div style={summaryRowStyle}>
           <span>Delivery Fee:</span>
           <span>₹50</span>
         </div>
@@ -394,7 +321,11 @@ function Cart() {
           <span>Total:</span>
           <span>₹{totalPrice + 50}</span>
         </div>
-        <button onClick={handleCheckout} style={checkoutButtonStyle}>Proceed to Checkout</button>
+       
+        <button style={checkoutButtonStyle}>
+          Proceed to Checkout
+        </button>
+       
         <button
           style={clearCartButtonStyle}
           onClick={clearCart}
